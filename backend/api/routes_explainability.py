@@ -23,7 +23,7 @@ router = APIRouter(prefix="/explain", tags=["Explainability & Trust"])
 
 
 class LIMERequest(BaseModel):
-    instance: list[float] = Field(..., description="Feature vector of target sample to explain")
+    instance: list[float] | None = Field(default=None, description="Feature vector of target sample to explain")
     num_samples: int = Field(default=150, ge=50, le=500)
 
 
@@ -36,7 +36,7 @@ def _get_or_create_model_version(model_id: int, db: Session) -> ModelVersion:
         model_ver = db.query(ModelVersion).order_by(ModelVersion.id.desc()).first()
     if not model_ver:
         model_ver = ModelVersion(
-            model_name="Wisconsin-Diagnostic-XGBoost",
+            model_name="AutoML-XGBOOST-QUANTUM",
             version="v2.1.0",
             architecture_type="xgboost",
             hyperparameters={"n_estimators": 50, "max_depth": 3},
@@ -93,24 +93,17 @@ def get_shap_explanation(
 @router.post("/lime/{model_id}")
 def get_lime_explanation(
     model_id: int,
-    req: LIMERequest,
+    req: LIMERequest = LIMERequest(),
     db: Session = Depends(get_db)
 ):
     """Compute LIME local surrogate linear explanation for a single query instance."""
     model_ver = _get_or_create_model_version(model_id, db)
     model_instance, splits = _load_model_instance(model_ver)
-    inst_arr = np.array(req.instance, dtype=np.float64)
-    expected_dim = splits.X_train.shape[1]
 
-    if len(inst_arr) != expected_dim:
-        full_inst = splits.X_val[0].copy()
-        limit = min(len(inst_arr), expected_dim)
-        full_inst[:limit] = inst_arr[:limit]
-        inst_arr = full_inst
-
+    target_instance = np.array(req.instance, dtype=np.float64) if req.instance else splits.X_val[0]
     lime_res = lime_explainer.explain_instance(
         model=model_instance,
-        instance=inst_arr,
+        instance=target_instance,
         training_data=splits.X_train,
         feature_names=splits.feature_names,
         num_samples=req.num_samples,

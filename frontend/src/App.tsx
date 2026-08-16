@@ -101,7 +101,7 @@ export default function App() {
             )}
 
             {activeTab === 'federated' && (
-              <FederatedView clients={clients} />
+              <FederatedView clients={clients} activeDataset={activeDataset} />
             )}
 
             {activeTab === 'automl-quantum' && (
