@@ -94,8 +94,20 @@ export const AutoMLQuantumView: React.FC<AutoMLQuantumViewProps> = ({
         </button>
       </div>
 
+      {/* Beginner Explanation Banner */}
+      <div className="p-4 rounded-xl bg-purple-950/30 border border-purple-500/30 flex items-start gap-3 text-xs">
+        <Sparkles className="w-5 h-5 text-purple-400 shrink-0 mt-0.5" />
+        <div className="space-y-1">
+          <div className="font-semibold text-purple-200">What is AutoML & Quantum Optimization?</div>
+          <p className="text-slate-300 leading-relaxed">
+            Instead of manually designing AI models, <strong>AutoML</strong> automatically tests multiple algorithms and tunes their settings. <strong>Quantum QAOA</strong> acts as a super-fast search engine that finds the most important column combinations in your dataset without trial and error.
+          </p>
+        </div>
+      </div>
+
       {/* Configuration & Formulation Panels */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
         {/* Pipeline Controls */}
         <div className="lg:col-span-2 glass-panel p-6 space-y-5">
           <h3 className="text-base font-display font-bold text-white">Pipeline Optimization Hyperparameters</h3>

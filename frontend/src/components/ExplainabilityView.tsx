@@ -184,8 +184,20 @@ export const ExplainabilityView: React.FC<ExplainabilityViewProps> = ({ models, 
         </a>
       </div>
 
+      {/* Beginner Explanation Banner */}
+      <div className="p-4 rounded-xl bg-cyan-950/30 border border-cyan-500/30 flex items-start gap-3 text-xs">
+        <Sparkles className="w-5 h-5 text-cyan-400 shrink-0 mt-0.5" />
+        <div className="space-y-1">
+          <div className="font-semibold text-cyan-200">Why Explainability Matters (Transparent AI):</div>
+          <p className="text-slate-300 leading-relaxed">
+            Instead of trusting an AI blindly, these visual charts show you exactly <strong>which factors drive the predictions</strong>. The <strong>SHAP chart</strong> ranks which columns matter most overall, while <strong>LIME</strong> breaks down whether each factor increased (green) or decreased (red) the prediction for a specific instance.
+          </p>
+        </div>
+      </div>
+
       {/* Model Selector */}
       <div className="glass-panel p-4 flex flex-wrap items-center justify-between gap-4">
+
         <div className="flex items-center gap-3">
           <label className="text-xs font-mono text-slate-400 uppercase font-semibold">Inspecting Model:</label>
           <select

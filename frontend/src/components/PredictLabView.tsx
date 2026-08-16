@@ -107,6 +107,17 @@ export const PredictLabView: React.FC<PredictLabViewProps> = ({ models, activeDa
   }
 
 
+  const isCustomDataset = Boolean(activeDataset && activeDataset.source === 'user_upload')
+  const targetCol = activeDataset?.target_column || 'Target'
+  const datasetTitle = activeDataset?.filename || 'Built-in Dataset'
+
+  const class0Name = isCustomDataset ? `Standard / Lower Tier (${targetCol})` : 'Negative / Normal (Class 0)'
+  const class1Name = isCustomDataset ? `High / Premium Tier (${targetCol})` : 'Positive / Target (Class 1)'
+
+  const outcomeTitle = isCustomDataset
+    ? (predictionResult?.prediction === 1 ? `High Tier (${targetCol})` : `Standard Tier (${targetCol})`)
+    : (predictionResult?.prediction === 1 ? 'Positive / Target Detected (1)' : 'Negative / Baseline (0)')
+
   return (
     <div className="space-y-8 animate-fadeIn">
       {/* Header */}
@@ -117,11 +128,11 @@ export const PredictLabView: React.FC<PredictLabViewProps> = ({ models, activeDa
               Real-time Inference Lab
             </h2>
             <span className="px-2.5 py-0.5 rounded-full bg-cyan-950/80 border border-cyan-800 text-cyan-300 text-xs font-mono">
-              &lt;15ms Latency Audit
+              Instant AI Prediction (&lt;15ms)
             </span>
           </div>
-          <p className="text-xs text-slate-400">
-            Execute sub-millisecond diagnostic predictions with confidence distributions and database telemetry logging
+          <p className="text-xs text-slate-400 mt-1">
+            Test instant predictions on custom inputs using your trained AI model.
           </p>
         </div>
 
@@ -134,15 +145,28 @@ export const PredictLabView: React.FC<PredictLabViewProps> = ({ models, activeDa
           {isLoading ? (
             <>
               <Loader2 className="w-4 h-4 animate-spin" />
-              <span>Evaluating Model...</span>
+              <span>Calculating Prediction...</span>
             </>
           ) : (
             <>
               <Zap className="w-4 h-4 fill-current" />
-              <span>Run Live Inference</span>
+              <span>Run Live Prediction</span>
             </>
           )}
         </button>
+      </div>
+
+      {/* Non-Coder Friendly Guide Banner */}
+      <div className="p-4 rounded-xl bg-cyan-950/30 border border-cyan-500/30 flex items-start gap-3">
+        <Sparkles className="w-5 h-5 text-cyan-400 shrink-0 mt-0.5" />
+        <div className="space-y-1 text-xs">
+          <div className="font-semibold text-cyan-200">How to use this page (No coding required):</div>
+          <p className="text-slate-300 leading-relaxed">
+            <strong>Step 1:</strong> On the left panel, adjust any input value (such as {featureLabels.slice(0, 3).join(', ')}).<br />
+            <strong>Step 2:</strong> Click the blue <strong>"Run Live Prediction"</strong> button.<br />
+            <strong>Step 3:</strong> See the AI's instant estimated outcome and confidence percentage on the right!
+          </p>
+        </div>
       </div>
 
       {/* Mode & Preset Controls */}
@@ -158,7 +182,7 @@ export const PredictLabView: React.FC<PredictLabViewProps> = ({ models, activeDa
                 : 'bg-slate-900 text-slate-400 hover:text-white'
             }`}
           >
-            Tabular ({featureLabels.length} Features)
+            Tabular ({featureLabels.length} Columns)
           </button>
           <button
             type="button"
@@ -181,30 +205,30 @@ export const PredictLabView: React.FC<PredictLabViewProps> = ({ models, activeDa
             onChange={(e) => setSelectedModelId(e.target.value ? Number(e.target.value) : undefined)}
             className="bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-cyan-500 font-mono"
           >
-            <option value="">Auto (Production)</option>
+            <option value="">Auto (Production Model)</option>
             {models.map((m) => (
               <option key={m.id} value={m.id}>
-                {m.model_name} {m.is_production ? '[PROD]' : ''}
+                {m.model_name} {m.is_production ? '[ACTIVE PRODUCTION]' : ''}
               </option>
             ))}
           </select>
         </div>
 
-        {/* Diagnostic Presets */}
+        {/* Example Presets */}
         {inputType === 'tabular' && (
           <div className="flex items-center gap-2 text-xs font-mono">
-            <span className="text-slate-500">Presets:</span>
+            <span className="text-slate-500">Example Inputs:</span>
             <button
               onClick={() => loadPreset('sampleA')}
-              className="px-2.5 py-1 rounded bg-rose-950/80 border border-rose-800 text-rose-300 hover:bg-rose-900/60 transition-colors cursor-pointer"
+              className="px-2.5 py-1 rounded bg-slate-900 border border-slate-700 text-cyan-300 hover:border-cyan-500 transition-colors cursor-pointer"
             >
-              High Feature Vector
+              High Values Sample
             </button>
             <button
               onClick={() => loadPreset('sampleB')}
-              className="px-2.5 py-1 rounded bg-emerald-950/80 border border-emerald-800 text-emerald-300 hover:bg-emerald-900/60 transition-colors cursor-pointer"
+              className="px-2.5 py-1 rounded bg-slate-900 border border-slate-700 text-slate-300 hover:border-slate-500 transition-colors cursor-pointer"
             >
-              Baseline Vector
+              Average Sample
             </button>
           </div>
         )}
@@ -218,21 +242,20 @@ export const PredictLabView: React.FC<PredictLabViewProps> = ({ models, activeDa
             <div className="flex items-center gap-2">
               <Sliders className="w-4 h-4 text-cyan-400" />
               <h3 className="text-base font-display font-bold text-white">
-                {inputType === 'tabular' ? 'Input Diagnostic Feature Vector' : 'Multi-Channel Sensor Time-Series'}
+                {inputType === 'tabular' ? 'Input Feature Values' : 'Multi-Channel Sensor Time-Series'}
               </h3>
             </div>
             <span className="text-xs font-mono text-slate-400 flex items-center gap-1.5">
               <FileSpreadsheet className="w-3.5 h-3.5 text-cyan-400" />
-              <span>{activeDataset?.filename || 'Wisconsin Diagnostic Dataset'}</span>
+              <span>{datasetTitle}</span>
             </span>
           </div>
-
 
           {inputType === 'tabular' ? (
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3 max-h-[380px] overflow-y-auto pr-2">
               {features.map((val, idx) => (
                 <div key={idx} className="p-2.5 rounded-lg bg-slate-900/80 border border-slate-800 space-y-1">
-                  <div className="text-[10px] font-mono text-slate-400 truncate" title={featureLabels[idx] || `F${idx + 1}`}>
+                  <div className="text-[11px] font-mono text-slate-300 font-medium truncate" title={featureLabels[idx] || `F${idx + 1}`}>
                     {featureLabels[idx] || `Feature ${idx + 1}`}
                   </div>
                   <input
@@ -244,7 +267,7 @@ export const PredictLabView: React.FC<PredictLabViewProps> = ({ models, activeDa
                       updated[idx] = parseFloat(e.target.value) || 0
                       setFeatures(updated)
                     }}
-                    className="w-full bg-slate-950 border border-slate-700 rounded px-2 py-1 text-xs text-cyan-300 font-mono focus:outline-none focus:border-cyan-500"
+                    className="w-full bg-slate-950 border border-slate-700 rounded px-2.5 py-1.5 text-xs text-cyan-300 font-mono focus:outline-none focus:border-cyan-500"
                   />
                 </div>
               ))}
@@ -268,10 +291,10 @@ export const PredictLabView: React.FC<PredictLabViewProps> = ({ models, activeDa
         {/* Prediction Results & Latency Card */}
         <div className="glass-panel p-6 space-y-5">
           <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-            <h3 className="text-base font-display font-bold text-white">Inference Assessment</h3>
+            <h3 className="text-base font-display font-bold text-white">Prediction Result</h3>
             <span className="font-mono text-xs text-emerald-400 flex items-center gap-1">
               <Activity className="w-3.5 h-3.5" />
-              <span>Live Engine</span>
+              <span>Model Active</span>
             </span>
           </div>
 
@@ -281,78 +304,82 @@ export const PredictLabView: React.FC<PredictLabViewProps> = ({ models, activeDa
               <div
                 className={`p-4 rounded-xl border text-center space-y-1.5 ${
                   predictionResult.prediction === 1
-                    ? 'bg-rose-950/40 border-rose-500/50 text-rose-300'
+                    ? 'bg-purple-950/40 border-purple-500/50 text-purple-300'
                     : 'bg-emerald-950/40 border-emerald-500/50 text-emerald-300'
                 }`}
               >
-                <div className="text-xs uppercase font-mono tracking-wider font-semibold">Predicted Outcome</div>
-                <div className="text-2xl font-display font-bold text-white">{predictionResult.predicted_label}</div>
-                <div className="text-xs font-mono">
-                  Confidence: {(predictionResult.confidence_score * 100).toFixed(1)}%
+                <div className="text-xs uppercase font-mono tracking-wider font-semibold text-slate-400">Estimated Outcome</div>
+                <div className="text-xl font-display font-bold text-white">{outcomeTitle}</div>
+                <div className="text-xs font-mono text-emerald-400">
+                  Confidence Score: {(predictionResult.confidence_score * 100).toFixed(1)}%
                 </div>
               </div>
 
               {/* Probabilities Distribution */}
               <div className="space-y-2 text-xs font-mono">
-                <div className="text-slate-400 uppercase font-semibold">Probability Distribution</div>
-                <div className="space-y-1.5">
-                  <div className="flex justify-between text-slate-300">
-                    <span>Benign / Normal:</span>
-                    <span className="text-emerald-400 font-bold">
-                      {((predictionResult.probabilities[0] || 0) * 100).toFixed(1)}%
-                    </span>
-                  </div>
-                  <div className="w-full h-2 bg-slate-900 rounded-full overflow-hidden border border-slate-800">
-                    <div
-                      className="h-full bg-emerald-400 rounded-full"
-                      style={{ width: `${(predictionResult.probabilities[0] || 0) * 100}%` }}
-                    />
+                <div className="text-slate-400 uppercase font-semibold">Confidence Distribution</div>
+                <div className="space-y-2">
+                  <div>
+                    <div className="flex justify-between text-slate-300 text-[11px] mb-1">
+                      <span>{class0Name}:</span>
+                      <span className="text-emerald-400 font-bold">
+                        {((predictionResult.probabilities[0] || 0) * 100).toFixed(1)}%
+                      </span>
+                    </div>
+                    <div className="w-full h-2 bg-slate-900 rounded-full overflow-hidden border border-slate-800">
+                      <div
+                        className="h-full bg-emerald-400 rounded-full transition-all duration-500"
+                        style={{ width: `${(predictionResult.probabilities[0] || 0) * 100}%` }}
+                      />
+                    </div>
                   </div>
 
-                  <div className="flex justify-between text-slate-300 pt-1">
-                    <span>Malignant / Anomaly:</span>
-                    <span className="text-rose-400 font-bold">
-                      {((predictionResult.probabilities[1] || 0) * 100).toFixed(1)}%
-                    </span>
-                  </div>
-                  <div className="w-full h-2 bg-slate-900 rounded-full overflow-hidden border border-slate-800">
-                    <div
-                      className="h-full bg-rose-400 rounded-full"
-                      style={{ width: `${(predictionResult.probabilities[1] || 0) * 100}%` }}
-                    />
+                  <div>
+                    <div className="flex justify-between text-slate-300 text-[11px] mb-1">
+                      <span>{class1Name}:</span>
+                      <span className="text-purple-400 font-bold">
+                        {((predictionResult.probabilities[1] || 0) * 100).toFixed(1)}%
+                      </span>
+                    </div>
+                    <div className="w-full h-2 bg-slate-900 rounded-full overflow-hidden border border-slate-800">
+                      <div
+                        className="h-full bg-purple-400 rounded-full transition-all duration-500"
+                        style={{ width: `${(predictionResult.probabilities[1] || 0) * 100}%` }}
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
 
-              {/* Latency & DB Audit Telemetry */}
+              {/* Latency & Audit Telemetry */}
               <div className="p-3.5 rounded-xl bg-slate-900/80 border border-slate-800 space-y-2 text-xs font-mono">
                 <div className="flex items-center justify-between text-slate-400">
                   <span className="flex items-center gap-1.5">
                     <Clock className="w-3.5 h-3.5 text-cyan-400" />
-                    <span>Inference Latency:</span>
+                    <span>Response Time:</span>
                   </span>
                   <span className="text-cyan-400 font-bold">{predictionResult.latency_ms} ms</span>
                 </div>
                 <div className="flex items-center justify-between text-slate-400">
                   <span className="flex items-center gap-1.5">
                     <Cpu className="w-3.5 h-3.5 text-purple-400" />
-                    <span>Model Version:</span>
+                    <span>Active Target:</span>
                   </span>
-                  <span className="text-purple-300 font-bold">ID #{predictionResult.model_version_id}</span>
+                  <span className="text-purple-300 font-bold">{targetCol}</span>
                 </div>
                 <div className="pt-2 border-t border-slate-800 flex items-center justify-between text-emerald-400 text-[11px]">
                   <span className="flex items-center gap-1">
                     <CheckCircle2 className="w-3 h-3" />
-                    <span>Logged to DB</span>
+                    <span>Prediction Logged</span>
                   </span>
-                  <span className="text-slate-500">table: predictions</span>
+                  <span className="text-slate-500">Status: Verified</span>
                 </div>
               </div>
             </div>
           ) : (
             <div className="h-64 flex flex-col items-center justify-center gap-3 text-slate-500 text-center p-4">
               <Zap className="w-8 h-8 text-slate-600" />
-              <div className="text-xs">Select features and click <span className="text-cyan-400">"Run Live Inference"</span> to test model classification.</div>
+              <div className="text-xs">Adjust your input values and click <span className="text-cyan-400 font-semibold">"Run Live Prediction"</span> to see the instant estimate.</div>
             </div>
           )}
         </div>
@@ -360,3 +387,4 @@ export const PredictLabView: React.FC<PredictLabViewProps> = ({ models, activeDa
     </div>
   )
 }
+

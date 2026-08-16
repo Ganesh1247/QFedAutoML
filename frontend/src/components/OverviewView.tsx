@@ -61,6 +61,46 @@ export const OverviewView: React.FC<OverviewViewProps> = ({ clients, models, onN
         <div className="absolute right-32 bottom-0 w-64 h-64 bg-purple-500/10 rounded-full blur-2xl pointer-events-none"></div>
       </div>
 
+      {/* Beginner Friendly "How It Works" Section */}
+      <div className="glass-panel p-6 border-cyan-500/30 bg-gradient-to-r from-slate-900/90 via-cyan-950/20 to-slate-900/90 space-y-4">
+        <div className="flex items-center gap-2 text-cyan-300 font-display font-bold text-sm">
+          <CheckCircle2 className="w-4 h-4 text-cyan-400" />
+          <span>How QFedAutoML Works (No Coding Knowledge Required)</span>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+          <div className="p-3.5 rounded-xl bg-slate-900/80 border border-slate-800 space-y-1.5">
+            <div className="font-bold text-cyan-300 flex items-center gap-2">
+              <span className="w-5 h-5 rounded-full bg-cyan-500/20 text-cyan-400 flex items-center justify-center text-[11px]">1</span>
+              <span>Upload Any Dataset</span>
+            </div>
+            <p className="text-slate-400 leading-relaxed">
+              Upload your CSV spreadsheet below (e.g. house prices, tabular numbers). The system automatically detects all features and classes.
+            </p>
+          </div>
+
+          <div className="p-3.5 rounded-xl bg-slate-900/80 border border-slate-800 space-y-1.5">
+            <div className="font-bold text-purple-300 flex items-center gap-2">
+              <span className="w-5 h-5 rounded-full bg-purple-500/20 text-purple-400 flex items-center justify-center text-[11px]">2</span>
+              <span>Automated Quantum AI</span>
+            </div>
+            <p className="text-slate-400 leading-relaxed">
+              Quantum algorithms (QAOA) search through hundreds of column combinations and train the most accurate AI model automatically.
+            </p>
+          </div>
+
+          <div className="p-3.5 rounded-xl bg-slate-900/80 border border-slate-800 space-y-1.5">
+            <div className="font-bold text-emerald-300 flex items-center gap-2">
+              <span className="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-[11px]">3</span>
+              <span>Instant Predictions & Charts</span>
+            </div>
+            <p className="text-slate-400 leading-relaxed">
+              Visit <strong>Inference Lab</strong> for instant predictions or <strong>Explainability & Trust</strong> to see clear visual charts of what factors drive the outcomes.
+            </p>
+          </div>
+        </div>
+      </div>
+
+
       {/* KPI Cards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
         {/* Card 1: Production Accuracy */}
