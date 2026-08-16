@@ -58,7 +58,7 @@ def solve_qubo_qaoa(
     qubo: QUBOProblem,
     p: int = 1,
     shots: int = 1024,
-    max_iter: int = 40,
+    max_iter: int = 12,
     random_state: int = 42
 ) -> dict[str, Any]:
     """

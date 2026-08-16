@@ -26,7 +26,7 @@ def optimize_hyperparameters(
     X_val: np.ndarray,
     y_val: np.ndarray,
     metric: str = "roc_auc",
-    n_trials: int = 15,
+    n_trials: int = 5,
     sampler_type: str = "tpe",
     random_state: int = 42
 ) -> dict[str, Any]:

@@ -45,8 +45,8 @@ def build_feature_selection_qubo(
     max_rel = np.max(relevance_scores) if np.max(relevance_scores) > 1e-9 else 1.0
     norm_relevance = relevance_scores / max_rel
 
-    # Keep candidate pool within logical qubit budget (max_qubits <= 16)
-    pool_size = min(total_features, max_qubits)
+    # Keep candidate pool within logical qubit budget (max_qubits <= 8 for sub-second simulation)
+    pool_size = min(total_features, min(max_qubits, 8))
     top_candidate_indices = np.argsort(relevance_scores)[::-1][:pool_size].tolist()
     candidate_names = [feat_names[i] for i in top_candidate_indices]
 
