@@ -70,13 +70,6 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Set up Docker Buildx
-        uses: actions/setup-buildx-action@v3
-
-      - name: Build Backend Container
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: infra/docker/backend.Dockerfile
-          push: false
-          tags: qfedautoml/backend:latest
+      - name: Build Backend Docker Image
+        run: |
+          docker build -f infra/docker/backend.Dockerfile -t qfedautoml/backend:latest .

@@ -39,8 +39,8 @@ services:
 
   frontend:
     build:
-      context: ./frontend
-      dockerfile: ../infra/docker/frontend.Dockerfile
+      context: .
+      dockerfile: infra/docker/frontend.Dockerfile
     container_name: qfed_frontend
     restart: unless-stopped
     ports:
