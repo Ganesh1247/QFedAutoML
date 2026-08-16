@@ -10,7 +10,7 @@ import {
   ChevronRight,
   Flame
 } from 'lucide-react'
-import { runAutoML } from '../services/api'
+import { runAutoML, ActiveDatasetInfo } from '../services/api'
 import { LeaderboardCandidate } from '../types'
 
 interface AutoMLQuantumViewProps {
@@ -20,19 +20,23 @@ interface AutoMLQuantumViewProps {
     leaderboard: LeaderboardCandidate[]
   }
   onRefreshLeaderboard: () => void
+  activeDataset?: ActiveDatasetInfo | null
 }
 
 export const AutoMLQuantumView: React.FC<AutoMLQuantumViewProps> = ({
   leaderboardData,
   onRefreshLeaderboard,
+  activeDataset,
 }) => {
   const [modelType, setModelType] = useState<string>('xgboost')
   const [featureOpt, setFeatureOpt] = useState<string>('quantum')
   const [hpoOpt, setHpoOpt] = useState<string>('classical')
-  const [kFeatures, setKFeatures] = useState<number>(6)
+  const maxK = activeDataset?.num_features ? Math.min(16, activeDataset.num_features) : 10
+  const [kFeatures, setKFeatures] = useState<number>(Math.min(6, maxK))
   const [pLayers, setPLayers] = useState<number>(1)
   const [isRunning, setIsRunning] = useState<boolean>(false)
   const [latestJobResult, setLatestJobResult] = useState<any>(null)
+
 
   const handleRunAutoML = async () => {
     setIsRunning(true)
@@ -138,20 +142,20 @@ export const AutoMLQuantumView: React.FC<AutoMLQuantumViewProps> = ({
             {/* Target Subset K Features */}
             <div className="space-y-2">
               <div className="flex justify-between text-xs font-mono">
-                <label className="text-slate-400 uppercase font-semibold">Target Features (k)</label>
-                <span className="text-cyan-400 font-bold">{kFeatures} Qubits</span>
+                <span className="text-slate-400 uppercase font-semibold">Target Features (k)</span>
+                <span className="text-purple-300 font-bold">{kFeatures} Features</span>
               </div>
               <input
                 type="range"
-                min={2}
-                max={12}
+                min="2"
+                max={maxK}
                 value={kFeatures}
                 onChange={(e) => setKFeatures(Number(e.target.value))}
-                className="w-full accent-cyan-500 bg-slate-900 rounded-lg cursor-pointer"
+                className="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-purple-500"
               />
               <div className="flex justify-between text-[10px] font-mono text-slate-500">
-                <span>2 Features</span>
-                <span>12 Logical Qubits</span>
+                <span>k=2</span>
+                <span>k={maxK}</span>
               </div>
             </div>
 

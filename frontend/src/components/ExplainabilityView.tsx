@@ -17,7 +17,7 @@ import {
   Legend
 } from 'chart.js'
 import { Bar } from 'react-chartjs-2'
-import { fetchShapExplanation, fetchLimeExplanation } from '../services/api'
+import { fetchShapExplanation, fetchLimeExplanation, ActiveDatasetInfo } from '../services/api'
 import { ModelVersion } from '../types'
 
 ChartJS.register(
@@ -31,9 +31,10 @@ ChartJS.register(
 
 interface ExplainabilityViewProps {
   models: ModelVersion[]
+  activeDataset?: ActiveDatasetInfo | null
 }
 
-export const ExplainabilityView: React.FC<ExplainabilityViewProps> = ({ models }) => {
+export const ExplainabilityView: React.FC<ExplainabilityViewProps> = ({ models, activeDataset }) => {
   const prodModel = models.find((m) => m.is_production) || models[0]
   const [selectedModelId, setSelectedModelId] = useState<number>(prodModel?.id || 1)
   const [shapData, setShapData] = useState<any>(null)
@@ -45,9 +46,13 @@ export const ExplainabilityView: React.FC<ExplainabilityViewProps> = ({ models }
     const loadExplanations = async () => {
       setLoading(true)
       try {
+        const featureCols = activeDataset?.feature_columns && activeDataset.feature_columns.length > 0
+          ? activeDataset.feature_columns
+          : undefined
+
         const [sRes, lRes] = await Promise.all([
-          fetchShapExplanation(selectedModelId),
-          fetchLimeExplanation(selectedModelId),
+          fetchShapExplanation(selectedModelId, featureCols),
+          fetchLimeExplanation(selectedModelId, featureCols),
         ])
         if (isMounted) {
           setShapData(sRes)
@@ -65,7 +70,8 @@ export const ExplainabilityView: React.FC<ExplainabilityViewProps> = ({ models }
     return () => {
       isMounted = false
     }
-  }, [selectedModelId])
+  }, [selectedModelId, activeDataset])
+
 
   // Extract SHAP rankings safely
   const shapRankings = (shapData?.rankings && Array.isArray(shapData.rankings) && shapData.rankings.length > 0)

@@ -13,7 +13,9 @@ import {
   fetchClients,
   fetchModels,
   fetchLeaderboard,
-  fetchSystemHealth
+  fetchSystemHealth,
+  fetchActiveDataset,
+  ActiveDatasetInfo
 } from './services/api'
 import { EdgeClient, ModelVersion, LeaderboardCandidate } from './types'
 
@@ -21,6 +23,7 @@ export default function App() {
   const [activeTab, setActiveTab] = useState<NavTab>('overview')
   const [clients, setClients] = useState<EdgeClient[]>([])
   const [models, setModels] = useState<ModelVersion[]>([])
+  const [activeDataset, setActiveDataset] = useState<ActiveDatasetInfo | null>(null)
   const [systemStatus, setSystemStatus] = useState<any>({
     status: 'healthy',
     version: '0.1.0',
@@ -50,6 +53,13 @@ export default function App() {
       setSystemStatus(sRes)
     } catch (err) {
       console.error('Data initialization error:', err)
+    }
+
+    try {
+      const dRes = await fetchActiveDataset()
+      setActiveDataset(dRes)
+    } catch {
+      setActiveDataset(null)
     }
   }
 
@@ -85,6 +95,7 @@ export default function App() {
               <AutoMLQuantumView
                 leaderboardData={leaderboardData}
                 onRefreshLeaderboard={loadAllData}
+                activeDataset={activeDataset}
               />
             )}
 
@@ -96,7 +107,10 @@ export default function App() {
             )}
 
             {activeTab === 'explainability' && (
-              <ExplainabilityView models={models} />
+              <ExplainabilityView
+                models={models}
+                activeDataset={activeDataset}
+              />
             )}
 
             {activeTab === 'privacy-security' && (
@@ -104,7 +118,10 @@ export default function App() {
             )}
 
             {activeTab === 'predict-lab' && (
-              <PredictLabView models={models} />
+              <PredictLabView
+                models={models}
+                activeDataset={activeDataset}
+              />
             )}
           </ErrorBoundary>
         </main>
@@ -112,3 +129,4 @@ export default function App() {
     </div>
   )
 }
+

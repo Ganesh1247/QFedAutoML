@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import {
   Zap,
   Activity,
@@ -8,16 +8,27 @@ import {
   Sliders,
   Loader2,
   Cpu,
-  Layers
+  Layers,
+  FileSpreadsheet
 } from 'lucide-react'
-import { runPrediction } from '../services/api'
+import { runPrediction, ActiveDatasetInfo } from '../services/api'
 import { ModelVersion, PredictionResult } from '../types'
 
 interface PredictLabViewProps {
   models: ModelVersion[]
+  activeDataset?: ActiveDatasetInfo | null
 }
 
-export const PredictLabView: React.FC<PredictLabViewProps> = ({ models }) => {
+const defaultBreastCancerLabels = [
+  'Mean Radius', 'Mean Texture', 'Mean Perimeter', 'Mean Area', 'Mean Smoothness',
+  'Mean Compactness', 'Mean Concavity', 'Mean Concave Points', 'Mean Symmetry', 'Mean Fractal Dimension',
+  'Radius Error', 'Texture Error', 'Perimeter Error', 'Area Error', 'Smoothness Error',
+  'Compactness Error', 'Concavity Error', 'Concave Points Error', 'Symmetry Error', 'Fractal Dimension Error',
+  'Worst Radius', 'Worst Texture', 'Worst Perimeter', 'Worst Area', 'Worst Smoothness',
+  'Worst Compactness', 'Worst Concavity', 'Worst Concave Points', 'Worst Symmetry', 'Worst Fractal Dimension'
+]
+
+export const PredictLabView: React.FC<PredictLabViewProps> = ({ models, activeDataset }) => {
   const [inputType, setInputType] = useState<'tabular' | 'sequence'>('tabular')
   const [selectedModelId, setSelectedModelId] = useState<number | undefined>(undefined)
   const [features, setFeatures] = useState<number[]>([
@@ -29,14 +40,18 @@ export const PredictLabView: React.FC<PredictLabViewProps> = ({ models }) => {
   const [predictionResult, setPredictionResult] = useState<PredictionResult | null>(null)
   const [isLoading, setIsLoading] = useState<boolean>(false)
 
-  const featureLabels = [
-    'Mean Radius', 'Mean Texture', 'Mean Perimeter', 'Mean Area', 'Mean Smoothness',
-    'Mean Compactness', 'Mean Concavity', 'Mean Concave Points', 'Mean Symmetry', 'Mean Fractal Dimension',
-    'Radius Error', 'Texture Error', 'Perimeter Error', 'Area Error', 'Smoothness Error',
-    'Compactness Error', 'Concavity Error', 'Concave Points Error', 'Symmetry Error', 'Fractal Dimension Error',
-    'Worst Radius', 'Worst Texture', 'Worst Perimeter', 'Worst Area', 'Worst Smoothness',
-    'Worst Compactness', 'Worst Concavity', 'Worst Concave Points', 'Worst Symmetry', 'Worst Fractal Dimension'
-  ]
+  // Dynamically set features when activeDataset changes
+  useEffect(() => {
+    if (activeDataset?.feature_columns && activeDataset.feature_columns.length > 0) {
+      // Initialize with reasonable numerical values
+      const initialVals = activeDataset.feature_columns.map((_, i) => +(10.0 + (i * 2.5)).toFixed(2))
+      setFeatures(initialVals)
+    }
+  }, [activeDataset])
+
+  const featureLabels = activeDataset?.feature_columns && activeDataset.feature_columns.length > 0
+    ? activeDataset.feature_columns
+    : defaultBreastCancerLabels
 
   const handleRunInference = async () => {
     setIsLoading(true)
@@ -65,23 +80,32 @@ export const PredictLabView: React.FC<PredictLabViewProps> = ({ models }) => {
     }
   }
 
-  const loadPreset = (type: 'malignant' | 'benign') => {
-    if (type === 'malignant') {
-      setFeatures([
-        17.99, 10.38, 122.8, 1001.0, 0.1184, 0.2776, 0.3001, 0.1471,
-        0.2419, 0.07871, 1.095, 0.9053, 8.589, 153.4, 0.006399, 0.04904,
-        0.05373, 0.01587, 0.03003, 0.006193, 25.38, 17.33, 184.6, 2019.0,
-        0.1622, 0.6656, 0.7119, 0.2654, 0.4601, 0.1189
-      ])
+  const loadPreset = (type: 'sampleA' | 'sampleB') => {
+    if (activeDataset?.feature_columns && activeDataset.feature_columns.length > 0) {
+      if (type === 'sampleA') {
+        setFeatures(activeDataset.feature_columns.map((_, i) => +(25.0 + (i * 4.2)).toFixed(2)))
+      } else {
+        setFeatures(activeDataset.feature_columns.map((_, i) => +(5.0 + (i * 1.1)).toFixed(2)))
+      }
     } else {
-      setFeatures([
-        13.54, 14.36, 87.46, 566.3, 0.09779, 0.08129, 0.06664, 0.04781,
-        0.1885, 0.05766, 0.2699, 0.7886, 2.058, 23.56, 0.008462, 0.0146,
-        0.02387, 0.01315, 0.0198, 0.0023, 15.11, 19.26, 99.7, 711.2,
-        0.144, 0.1773, 0.239, 0.1288, 0.2977, 0.07259
-      ])
+      if (type === 'sampleA') {
+        setFeatures([
+          17.99, 10.38, 122.8, 1001.0, 0.1184, 0.2776, 0.3001, 0.1471,
+          0.2419, 0.07871, 1.095, 0.9053, 8.589, 153.4, 0.006399, 0.04904,
+          0.05373, 0.01587, 0.03003, 0.006193, 25.38, 17.33, 184.6, 2019.0,
+          0.1622, 0.6656, 0.7119, 0.2654, 0.4601, 0.1189
+        ])
+      } else {
+        setFeatures([
+          13.54, 14.36, 87.46, 566.3, 0.09779, 0.08129, 0.06664, 0.04781,
+          0.1885, 0.05766, 0.2699, 0.7886, 2.058, 23.56, 0.008462, 0.0146,
+          0.02387, 0.01315, 0.0198, 0.0023, 15.11, 19.26, 99.7, 711.2,
+          0.144, 0.1773, 0.239, 0.1288, 0.2977, 0.07259
+        ])
+      }
     }
   }
+
 
   return (
     <div className="space-y-8 animate-fadeIn">
@@ -134,7 +158,7 @@ export const PredictLabView: React.FC<PredictLabViewProps> = ({ models }) => {
                 : 'bg-slate-900 text-slate-400 hover:text-white'
             }`}
           >
-            Tabular (30 Features)
+            Tabular ({featureLabels.length} Features)
           </button>
           <button
             type="button"
@@ -171,16 +195,16 @@ export const PredictLabView: React.FC<PredictLabViewProps> = ({ models }) => {
           <div className="flex items-center gap-2 text-xs font-mono">
             <span className="text-slate-500">Presets:</span>
             <button
-              onClick={() => loadPreset('malignant')}
-              className="px-2.5 py-1 rounded bg-rose-950/80 border border-rose-800 text-rose-300 hover:bg-rose-900/60 transition-colors"
+              onClick={() => loadPreset('sampleA')}
+              className="px-2.5 py-1 rounded bg-rose-950/80 border border-rose-800 text-rose-300 hover:bg-rose-900/60 transition-colors cursor-pointer"
             >
-              Sample A (Malignant)
+              High Feature Vector
             </button>
             <button
-              onClick={() => loadPreset('benign')}
-              className="px-2.5 py-1 rounded bg-emerald-950/80 border border-emerald-800 text-emerald-300 hover:bg-emerald-900/60 transition-colors"
+              onClick={() => loadPreset('sampleB')}
+              className="px-2.5 py-1 rounded bg-emerald-950/80 border border-emerald-800 text-emerald-300 hover:bg-emerald-900/60 transition-colors cursor-pointer"
             >
-              Sample B (Benign)
+              Baseline Vector
             </button>
           </div>
         )}
@@ -197,10 +221,12 @@ export const PredictLabView: React.FC<PredictLabViewProps> = ({ models }) => {
                 {inputType === 'tabular' ? 'Input Diagnostic Feature Vector' : 'Multi-Channel Sensor Time-Series'}
               </h3>
             </div>
-            <span className="text-xs font-mono text-slate-400">
-              {inputType === 'tabular' ? 'Wisconsin Diagnostic Dataset' : '10 Timesteps × 6 Channels'}
+            <span className="text-xs font-mono text-slate-400 flex items-center gap-1.5">
+              <FileSpreadsheet className="w-3.5 h-3.5 text-cyan-400" />
+              <span>{activeDataset?.filename || 'Wisconsin Diagnostic Dataset'}</span>
             </span>
           </div>
+
 
           {inputType === 'tabular' ? (
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3 max-h-[380px] overflow-y-auto pr-2">
