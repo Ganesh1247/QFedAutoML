@@ -358,7 +358,10 @@ export const uploadDataset = async (
 /** Return currently active dataset metadata */
 export const fetchActiveDataset = async (): Promise<ActiveDatasetInfo> => {
   const res = await api.get('/datasets/active')
-  return res.data
+  if (res.data && typeof res.data === 'object' && typeof res.data.num_samples === 'number') {
+    return res.data
+  }
+  throw new Error('No active dataset available')
 }
 
 /** Reset platform to built-in breast cancer dataset */
