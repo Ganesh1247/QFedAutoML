@@ -49,6 +49,7 @@ backend/data/uploads/*.csv
 !backend/data/uploads/.gitkeep
 backend/data/active_dataset.json
 *.log
+.firebase/
 
 # IDE & OS
 .idea/
