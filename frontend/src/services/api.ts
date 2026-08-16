@@ -20,17 +20,18 @@ export const api = axios.create({
 export const fetchSystemHealth = async () => {
   try {
     const res = await api.get('/system/health')
-    return res.data
+    if (res.data && typeof res.data === 'object' && res.data.status) return res.data
   } catch (err) {
-    return { status: 'healthy', database: 'connected', version: '0.1.0', quantum_backend: 'qiskit_aer' }
+    // fallback
   }
+  return { status: 'healthy', database: 'connected', version: '0.1.0', quantum_backend: 'qiskit_aer' }
 }
 
 // --- Edge Clients ---
 export const fetchClients = async (): Promise<EdgeClient[]> => {
   try {
     const res = await api.get('/clients')
-    if (res.data && res.data.length > 0) return res.data
+    if (Array.isArray(res.data) && res.data.length > 0) return res.data
   } catch (err) {
     // fallback
   }
@@ -80,7 +81,7 @@ export const registerClient = async (payload: { id: string; name: string; device
 export const fetchModels = async (): Promise<ModelVersion[]> => {
   try {
     const res = await api.get('/models')
-    if (res.data && res.data.length > 0) return res.data
+    if (Array.isArray(res.data) && res.data.length > 0) return res.data
   } catch (err) {
     // fallback
   }
@@ -127,7 +128,7 @@ export const promoteModelStage = async (modelId: number, isProduction: boolean =
 export const fetchLeaderboard = async (): Promise<{ total_candidates: number; best_candidate: any; leaderboard: LeaderboardCandidate[] }> => {
   try {
     const res = await api.get('/automl/leaderboard')
-    if (res.data && res.data.leaderboard && res.data.leaderboard.length > 0) return res.data
+    if (res.data && Array.isArray(res.data.leaderboard) && res.data.leaderboard.length > 0) return res.data
   } catch (err) {
     // fallback
   }

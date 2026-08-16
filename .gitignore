@@ -7,7 +7,6 @@ __pycache__/
 env/
 build/
 develop-eggs/
-dist/
 downloads/
 eggs/
 .eggs/
@@ -33,7 +32,6 @@ ENV/
 
 # Node / Frontend
 node_modules/
-frontend/node_modules/
 frontend/dist/
 .npm
 npm-debug.log*
@@ -45,6 +43,7 @@ yarn-error.log*
 .env.local
 
 # Database & Runtime
+*.db
 backend/data/uploads/*.csv
 !backend/data/uploads/.gitkeep
 backend/data/active_dataset.json
