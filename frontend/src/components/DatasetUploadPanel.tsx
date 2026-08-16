@@ -56,11 +56,12 @@ export const DatasetUploadPanel: React.FC<DatasetUploadPanelProps> = ({ onDatase
     setTargetColumn('')
     setPeekLoading(true)
     try {
-      const { columns: cols } = await peekCsvHeaders(file)
+      const res = await peekCsvHeaders(file)
+      const cols = Array.isArray(res?.columns) ? res.columns : []
       setColumns(cols)
-      setTargetColumn(cols[cols.length - 1] || '')
+      setTargetColumn(cols.length > 0 ? cols[cols.length - 1] : '')
     } catch (err: any) {
-      setErrorMsg(err?.response?.data?.detail || 'Failed to read CSV headers.')
+      setErrorMsg(err?.message || 'Failed to read CSV headers.')
     } finally {
       setPeekLoading(false)
     }
@@ -69,7 +70,7 @@ export const DatasetUploadPanel: React.FC<DatasetUploadPanelProps> = ({ onDatase
   const onDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault()
     setDragOver(false)
-    const file = e.dataTransfer.files[0]
+    const file = e.dataTransfer.files?.[0]
     if (file) handleFileSelect(file)
   }, [handleFileSelect])
 
@@ -86,19 +87,24 @@ export const DatasetUploadPanel: React.FC<DatasetUploadPanelProps> = ({ onDatase
     setSuccessMsg(null)
     try {
       const result = await uploadDataset(selectedFile, targetColumn, setUploadPct)
-      setActiveDataset(result.dataset as ActiveDatasetInfo)
-      setSuccessMsg(result.message)
-      setSelectedFile(null)
-      setColumns([])
-      setTargetColumn('')
-      if (fileInputRef.current) fileInputRef.current.value = ''
-      onDatasetChange?.()
+      if (result && result.dataset) {
+        setActiveDataset(result.dataset as ActiveDatasetInfo)
+        setSuccessMsg(result.message || 'Dataset activated successfully!')
+        setSelectedFile(null)
+        setColumns([])
+        setTargetColumn('')
+        if (fileInputRef.current) fileInputRef.current.value = ''
+        onDatasetChange?.()
+      } else {
+        throw new Error('Invalid dataset response')
+      }
     } catch (err: any) {
-      setErrorMsg(err?.response?.data?.detail || 'Upload failed. Check your CSV format.')
+      setErrorMsg(err?.message || 'Upload failed. Check your CSV format.')
     } finally {
       setUploading(false)
     }
   }
+
 
   const handleReset = async () => {
     setResetting(true)
@@ -156,10 +162,10 @@ export const DatasetUploadPanel: React.FC<DatasetUploadPanelProps> = ({ onDatase
                 </span>
               </div>
               <div className="flex flex-wrap gap-x-4 gap-y-1 text-[11px] font-mono text-slate-400">
-                <span>{activeDataset.num_samples.toLocaleString()} rows</span>
-                <span>{activeDataset.num_features} features</span>
-                <span>{activeDataset.num_classes} classes</span>
-                <span>Target: <code className="text-cyan-400">{activeDataset.target_column}</code></span>
+                <span>{(activeDataset.num_samples ?? 0).toLocaleString()} rows</span>
+                <span>{activeDataset.num_features ?? 0} features</span>
+                <span>{activeDataset.num_classes ?? 0} classes</span>
+                <span>Target: <code className="text-cyan-400">{activeDataset.target_column || 'target'}</code></span>
               </div>
             </div>
             {isUserDataset && (
@@ -178,29 +184,34 @@ export const DatasetUploadPanel: React.FC<DatasetUploadPanelProps> = ({ onDatase
           </div>
 
           {/* Feature pills */}
-          <div className="flex flex-wrap gap-1.5">
-            {activeDataset.feature_columns.slice(0, 10).map((f) => (
-              <span key={f} className="px-2 py-0.5 rounded text-[10px] font-mono bg-slate-900 border border-slate-800 text-slate-400">
-                {f}
-              </span>
-            ))}
-            {activeDataset.feature_columns.length > 10 && (
-              <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-slate-900 border border-slate-800 text-slate-500">
-                +{activeDataset.feature_columns.length - 10} more
-              </span>
-            )}
-          </div>
+          {activeDataset.feature_columns && activeDataset.feature_columns.length > 0 && (
+            <div className="flex flex-wrap gap-1.5">
+              {activeDataset.feature_columns.slice(0, 10).map((f) => (
+                <span key={f} className="px-2 py-0.5 rounded text-[10px] font-mono bg-slate-900 border border-slate-800 text-slate-400">
+                  {f}
+                </span>
+              ))}
+              {activeDataset.feature_columns.length > 10 && (
+                <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-slate-900 border border-slate-800 text-slate-500">
+                  +{activeDataset.feature_columns.length - 10} more
+                </span>
+              )}
+            </div>
+          )}
 
           {/* Class distribution */}
-          <div className="flex gap-2 flex-wrap">
-            {Object.entries(activeDataset.class_distribution).map(([cls, count]) => (
-              <div key={cls} className="flex items-center gap-1.5 text-[11px] font-mono">
-                <span className="w-2 h-2 rounded-full bg-cyan-400 opacity-70"></span>
-                <span className="text-slate-400">Class {cls}:</span>
-                <span className="text-white font-semibold">{count}</span>
-              </div>
-            ))}
-          </div>
+          {activeDataset.class_distribution && Object.keys(activeDataset.class_distribution).length > 0 && (
+            <div className="flex gap-2 flex-wrap">
+              {Object.entries(activeDataset.class_distribution).map(([cls, count]) => (
+                <div key={cls} className="flex items-center gap-1.5 text-[11px] font-mono">
+                  <span className="w-2 h-2 rounded-full bg-cyan-400 opacity-70"></span>
+                  <span className="text-slate-400">Class {cls}:</span>
+                  <span className="text-white font-semibold">{count}</span>
+                </div>
+              ))}
+            </div>
+          )}
+
 
           {/* Dropped columns warning */}
           {activeDataset.dropped_non_numeric && activeDataset.dropped_non_numeric.length > 0 && (
