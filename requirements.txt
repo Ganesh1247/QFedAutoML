@@ -1,0 +1,47 @@
+# --- Backend / API ---
+fastapi>=0.110.0
+uvicorn[standard]>=0.28.0
+pydantic>=2.6.0
+pydantic-settings>=2.2.0
+sqlalchemy>=2.0.28
+alembic>=1.13.1
+psycopg2-binary>=2.9.9
+python-jose[cryptography]>=3.3.0
+passlib[bcrypt]>=1.7.4
+bcrypt>=4.0.0
+email-validator>=2.0.0
+python-multipart>=0.0.9
+python-dotenv>=1.0.1
+httpx>=0.27.0
+
+# --- Classical ML ---
+torch>=2.2.0
+scikit-learn>=1.4.0
+xgboost>=2.0.3
+pandas>=2.2.0
+numpy>=1.26.0
+
+# --- Federated Learning ---
+flwr>=1.7.0
+
+# --- Quantum (Simulators Only) ---
+qiskit>=1.0.0
+qiskit-aer>=0.13.0
+pennylane>=0.35.0
+
+# --- AutoML / HPO ---
+optuna>=3.5.0
+
+# --- Privacy ---
+opacus>=1.4.0
+
+# --- Explainability ---
+shap>=0.45.0
+lime>=0.2.0.1
+
+# --- Testing / Dev Quality ---
+pytest>=8.0.0
+pytest-cov>=4.1.0
+pytest-asyncio>=0.23.5
+ruff>=0.3.0
+black>=24.2.0
