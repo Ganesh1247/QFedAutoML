@@ -58,8 +58,20 @@ export const ModelRegistryView: React.FC<ModelRegistryViewProps> = ({ models, on
         </div>
       </div>
 
+      {/* Beginner Explanation Banner */}
+      <div className="p-4 rounded-xl bg-cyan-950/30 border border-cyan-500/30 flex items-start gap-3 text-xs">
+        <CheckCircle2 className="w-5 h-5 text-cyan-400 shrink-0 mt-0.5" />
+        <div className="space-y-1">
+          <div className="font-semibold text-cyan-200">What is the Model Registry? (The AI Model Warehouse)</div>
+          <p className="text-slate-300 leading-relaxed">
+            Whenever you run <strong>AutoML</strong> or <strong>Federated Training</strong>, the newly trained AI model is automatically saved here with its version number, accuracy report, and settings. You can click on any model to inspect its scorecard, and click <strong>"Promote to Production"</strong> to make it the active AI that answers live predictions in the <strong>Inference Lab</strong>.
+          </p>
+        </div>
+      </div>
+
       {/* Models Grid & Detail Inspector */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
         {/* Model Versions List */}
         <div className="lg:col-span-2 space-y-4">
           <div className="flex items-center justify-between">
