@@ -130,104 +130,128 @@ export const DatasetUploadPanel: React.FC<DatasetUploadPanelProps> = ({ onDatase
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Database className="w-4 h-4 text-cyan-400" />
-          <h3 className="text-base font-display font-bold text-white">
-            Dataset Management
-          </h3>
+          <Database className="w-5 h-5 text-cyan-400" />
+          <div>
+            <h3 className="text-base font-display font-bold text-white">
+              Dataset Management & Active Data Status
+            </h3>
+            <p className="text-xs text-slate-400">
+              The dataset active below is used across all training, AutoML, and prediction modules
+            </p>
+          </div>
         </div>
         <span
-          className={`text-[10px] font-mono px-2.5 py-0.5 rounded-full border font-semibold ${
+          className={`text-[11px] font-mono px-3 py-1 rounded-full border font-bold ${
             isUserDataset
-              ? 'bg-purple-950 border-purple-700 text-purple-300'
-              : 'bg-slate-800 border-slate-700 text-slate-400'
+              ? 'bg-purple-950 border-purple-500 text-purple-300 shadow-sm shadow-purple-500/20'
+              : 'bg-slate-800 border-slate-700 text-slate-300'
           }`}
         >
-          {isUserDataset ? '🔷 Custom Dataset Active' : '🔵 Built-in Dataset'}
+          {isUserDataset ? '🔷 Active Custom Dataset' : '🔵 Built-in Sample Dataset'}
         </span>
       </div>
 
-      {/* Active Dataset Info */}
-      {activeDataset && (
-        <div className={`p-4 rounded-xl border space-y-3 ${
+      {/* Active Dataset Clear Profile Card */}
+      {activeDataset ? (
+        <div className={`p-5 rounded-2xl border space-y-4 ${
           isUserDataset
-            ? 'bg-purple-950/20 border-purple-700/50'
-            : 'bg-slate-900/60 border-slate-800'
+            ? 'bg-gradient-to-r from-purple-950/40 via-slate-900 to-slate-900 border-purple-600/60 shadow-lg shadow-purple-950/40'
+            : 'bg-slate-900/80 border-slate-800'
         }`}>
-          <div className="flex items-start justify-between gap-3">
-            <div className="space-y-1 min-w-0">
-              <div className="flex items-center gap-2">
-                <FileSpreadsheet className={`w-3.5 h-3.5 shrink-0 ${isUserDataset ? 'text-purple-400' : 'text-cyan-400'}`} />
-                <span className="text-xs font-semibold text-white truncate">
-                  {activeDataset.filename}
-                </span>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800/80 pb-4">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className={`p-3 rounded-xl ${isUserDataset ? 'bg-purple-500/20 text-purple-300' : 'bg-cyan-500/20 text-cyan-300'}`}>
+                <FileSpreadsheet className="w-6 h-6" />
               </div>
-              <div className="flex flex-wrap gap-x-4 gap-y-1 text-[11px] font-mono text-slate-400">
-                <span>{(activeDataset.num_samples ?? 0).toLocaleString()} rows</span>
-                <span>{activeDataset.num_features ?? 0} features</span>
-                <span>{activeDataset.num_classes ?? 0} classes</span>
-                <span>Target: <code className="text-cyan-400">{activeDataset.target_column || 'target'}</code></span>
+              <div className="min-w-0">
+                <div className="text-sm font-bold text-white truncate flex items-center gap-2">
+                  <span>{activeDataset.filename}</span>
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-800 border border-slate-700 text-cyan-300">
+                    Active in Memory
+                  </span>
+                </div>
+                <div className="text-xs text-slate-300 mt-0.5">
+                  Goal: Predicting <strong className="text-cyan-300 font-mono">{activeDataset.target_column || 'target'}</strong> based on {activeDataset.num_features ?? 0} factors
+                </div>
               </div>
             </div>
+
             {isUserDataset && (
               <button
                 onClick={handleReset}
                 disabled={resetting}
-                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-slate-400 hover:text-rose-300 hover:border-rose-700 text-xs font-mono transition-all shrink-0 cursor-pointer disabled:opacity-50"
+                className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-slate-300 hover:text-rose-300 hover:border-rose-700 text-xs font-semibold transition-all shrink-0 cursor-pointer disabled:opacity-50"
               >
                 {resetting
                   ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
                   : <RotateCcw className="w-3.5 h-3.5" />
                 }
-                <span>Reset to Default</span>
+                <span>Switch to Built-in Sample</span>
               </button>
             )}
           </div>
 
-          {/* Feature pills */}
+          {/* Dataset Statistics Matrix */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs font-mono">
+            <div className="p-3 rounded-xl bg-slate-950/80 border border-slate-800">
+              <span className="text-[10px] text-slate-500 uppercase">Total Rows</span>
+              <div className="text-base font-bold text-white mt-0.5">{(activeDataset.num_samples ?? 0).toLocaleString()}</div>
+            </div>
+            <div className="p-3 rounded-xl bg-slate-950/80 border border-slate-800">
+              <span className="text-[10px] text-slate-500 uppercase">Input Factors</span>
+              <div className="text-base font-bold text-cyan-300 mt-0.5">{activeDataset.num_features ?? 0} Columns</div>
+            </div>
+            <div className="p-3 rounded-xl bg-slate-950/80 border border-slate-800">
+              <span className="text-[10px] text-slate-500 uppercase">Predicted Target</span>
+              <div className="text-xs font-bold text-purple-300 mt-1 truncate" title={activeDataset.target_column || 'target'}>
+                {activeDataset.target_column || 'target'}
+              </div>
+            </div>
+            <div className="p-3 rounded-xl bg-slate-950/80 border border-slate-800">
+              <span className="text-[10px] text-slate-500 uppercase">Partition Status</span>
+              <div className="text-xs font-bold text-emerald-400 mt-1 flex items-center gap-1">
+                <CheckCircle2 className="w-3 h-3" />
+                <span>3 Edge Nodes</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Feature columns badges */}
           {activeDataset.feature_columns && activeDataset.feature_columns.length > 0 && (
-            <div className="flex flex-wrap gap-1.5">
-              {activeDataset.feature_columns.slice(0, 10).map((f) => (
-                <span key={f} className="px-2 py-0.5 rounded text-[10px] font-mono bg-slate-900 border border-slate-800 text-slate-400">
-                  {f}
-                </span>
-              ))}
-              {activeDataset.feature_columns.length > 10 && (
-                <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-slate-900 border border-slate-800 text-slate-500">
-                  +{activeDataset.feature_columns.length - 10} more
-                </span>
-              )}
+            <div className="space-y-1.5 pt-1">
+              <div className="text-[11px] font-mono text-slate-400 font-semibold uppercase">
+                Active Factors (Input Features):
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {activeDataset.feature_columns.map((f) => (
+                  <span key={f} className="px-2.5 py-1 rounded-lg text-xs font-mono bg-slate-950/90 border border-slate-800 text-slate-300">
+                    {f}
+                  </span>
+                ))}
+              </div>
             </div>
           )}
 
-          {/* Class distribution */}
-          {activeDataset.class_distribution && Object.keys(activeDataset.class_distribution).length > 0 && (
-            <div className="flex gap-2 flex-wrap">
-              {Object.entries(activeDataset.class_distribution).map(([cls, count]) => (
-                <div key={cls} className="flex items-center gap-1.5 text-[11px] font-mono">
-                  <span className="w-2 h-2 rounded-full bg-cyan-400 opacity-70"></span>
-                  <span className="text-slate-400">Class {cls}:</span>
-                  <span className="text-white font-semibold">{count}</span>
-                </div>
-              ))}
-            </div>
-          )}
-
-
-          {/* Dropped columns warning */}
+          {/* Dropped columns warning if any */}
           {activeDataset.dropped_non_numeric && activeDataset.dropped_non_numeric.length > 0 && (
-            <div className="flex items-center gap-2 text-[11px] font-mono text-amber-400">
-              <AlertTriangle className="w-3 h-3 shrink-0" />
-              <span>Non-numeric columns auto-dropped: {activeDataset.dropped_non_numeric.join(', ')}</span>
+            <div className="flex items-center gap-2 p-2.5 rounded-lg bg-amber-950/30 border border-amber-800/40 text-xs font-mono text-amber-300">
+              <AlertTriangle className="w-4 h-4 shrink-0" />
+              <span>Note: Non-numeric columns (e.g. text/date strings) were excluded: {activeDataset.dropped_non_numeric.join(', ')}</span>
             </div>
           )}
         </div>
-      )}
+      ) : null}
 
       {/* Upload Zone */}
-      <div className="space-y-3">
-        <p className="text-xs text-slate-400">
-          Upload your own <span className="text-cyan-400 font-mono">.csv</span> dataset — it will replace the active dataset across <span className="text-white">all platform modules</span> (AutoML, SHAP/LIME, Predict Lab, Federated Training).
+      <div className="space-y-3 pt-2">
+        <div className="text-xs text-slate-300 font-semibold flex items-center gap-2">
+          <Upload className="w-4 h-4 text-cyan-400" />
+          <span>Upload a New Dataset (.csv):</span>
+        </div>
+        <p className="text-xs text-slate-400 leading-relaxed">
+          Upload any CSV spreadsheet (such as housing data, sales figures, or medical metrics). It will immediately update all modules across the platform.
         </p>
+
 
         {/* Drag & Drop Zone */}
         <div

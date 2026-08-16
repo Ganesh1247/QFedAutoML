@@ -19,11 +19,14 @@ import {
 } from './services/api'
 import { EdgeClient, ModelVersion, LeaderboardCandidate } from './types'
 
+import { SimpleGuideModal } from './components/SimpleGuideModal'
+
 export default function App() {
   const [activeTab, setActiveTab] = useState<NavTab>('overview')
   const [clients, setClients] = useState<EdgeClient[]>([])
   const [models, setModels] = useState<ModelVersion[]>([])
   const [activeDataset, setActiveDataset] = useState<ActiveDatasetInfo | null>(null)
+  const [guideModalOpen, setGuideModalOpen] = useState(false)
   const [systemStatus, setSystemStatus] = useState<any>({
     status: 'healthy',
     version: '0.1.0',
@@ -70,7 +73,17 @@ export default function App() {
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-cyan-500 selection:text-slate-950">
       {/* Top Navbar */}
-      <Navbar systemStatus={systemStatus} />
+      <Navbar
+        systemStatus={systemStatus}
+        activeDataset={activeDataset}
+        onOpenGuide={() => setGuideModalOpen(true)}
+      />
+
+      {/* Beginner Guide Modal */}
+      <SimpleGuideModal
+        isOpen={guideModalOpen}
+        onClose={() => setGuideModalOpen(false)}
+      />
 
       {/* Main Body with Sidebar + Tab Content */}
       <div className="flex-1 flex overflow-hidden">
@@ -129,4 +142,5 @@ export default function App() {
     </div>
   )
 }
+
 
