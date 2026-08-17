@@ -431,31 +431,70 @@ export const runPrediction = async (payload: {
     }
   }
 
-  // General custom classification / housing logic
-  const classLabels = activeInfo?.class_labels || (isHousing ? ['Standard Value / Below Avg', 'Premium Value / Above Avg'] : ['Class 0 (Negative / Standard)', 'Class 1 (Positive / Target)'])
-  
-  let score = 0.5
-  if (featVals.length > 0) {
-    const sum = featVals.reduce((acc, v, i) => acc + (v * ((i % 3) - 1)), 0)
-    score = 1 / (1 + Math.exp(-sum / (featVals.length || 1)))
-  } else if (payload.sequence && payload.sequence.length > 0) {
-    score = 0.82 + Math.random() * 0.15
-  }
+  // General custom classification / housing / movies / tabular logic
+  const featMean = featVals.length > 0 ? featVals.reduce((a, b) => a + b, 0) / featVals.length : 10.0
+  const normalizedSum = featVals.reduce((acc, v, i) => {
+    // Dynamic sensitivity per feature
+    const weight = ((i % 4) + 1) * 0.25
+    return acc + (v * weight)
+  }, 0)
 
-  const predIdx = score >= 0.5 ? 1 : 0
+  // Scale score smoothly between 0.05 and 0.98 based on user input magnitude
+  const baseline = featVals.length * 15.0 || 50.0
+  const zScore = (normalizedSum - baseline) / (baseline * 0.5 || 1.0)
+  const score = Math.max(0.05, Math.min(0.98, 1 / (1 + Math.exp(-zScore * 1.8))))
+
+  const isHighTier = score >= 0.5
+  const predIdx = isHighTier ? 1 : 0
   const confidence = +(Math.max(score, 1 - score)).toFixed(4)
-  const latencyMs = +(8.2 + Math.random() * 6.5).toFixed(1)
+  const latencyMs = +(7.5 + Math.random() * 5.5).toFixed(1)
   const prob0 = +(1 - score).toFixed(4)
   const prob1 = +score.toFixed(4)
 
+  // Calculate estimated real numerical target value based on inputs
+  const targetColName = (activeInfo?.target_column || 'Target').toLowerCase()
+  let estimatedValue: string | undefined = undefined
+
+  if (targetColName.includes('price')) {
+    const estPrice = Math.max(150000, normalizedSum * 850 + 200000)
+    estimatedValue = `$${Math.round(estPrice).toLocaleString()}`
+  } else if (targetColName.includes('runtime')) {
+    const estMins = Math.max(75, Math.min(210, 90 + zScore * 25))
+    estimatedValue = `${estMins.toFixed(1)} mins`
+  } else if (targetColName.includes('rating') || targetColName.includes('score')) {
+    const estRating = Math.max(4.0, Math.min(9.8, 6.8 + zScore * 1.5))
+    estimatedValue = `${estRating.toFixed(1)} / 10.0`
+  } else {
+    estimatedValue = `${(normalizedSum * 1.2).toFixed(2)}`
+  }
+
+  let label0 = `Standard / Lower Tier (${activeInfo?.target_column || 'Target'})`
+  let label1 = `High / Premium Tier (${activeInfo?.target_column || 'Target'})`
+
+  if (activeInfo?.class_labels && activeInfo.class_labels.length >= 2) {
+    label0 = activeInfo.class_labels[0]
+    label1 = activeInfo.class_labels[1]
+  } else if (targetColName.includes('price')) {
+    label0 = '🏡 Standard / Affordable Price Tier'
+    label1 = '💎 High-Value / Premium Price Tier'
+  } else if (targetColName.includes('runtime')) {
+    label0 = '🎬 Feature Film Standard Runtime (<115 mins)'
+    label1 = '🎥 Extended Epic Runtime (>115 mins)'
+  } else if (targetColName.includes('rating')) {
+    label0 = '👍 Standard Average Audience Rating'
+    label1 = '⭐ Top Rated / Critical Acclaim'
+  }
+
   const breakdown = [
-    { label: classLabels[0] || 'Class 0', probability: prob0 },
-    { label: classLabels[1] || 'Class 1', probability: prob1 }
+    { label: label0, probability: prob0 },
+    { label: label1, probability: prob1 }
   ]
+
+  const predictedLabelName = isHighTier ? label1 : label0
 
   return {
     prediction: predIdx,
-    predicted_label: classLabels[predIdx] || (predIdx === 1 ? 'Positive (1)' : 'Negative (0)'),
+    predicted_label: estimatedValue ? `${predictedLabelName} • Estimated Value: ${estimatedValue}` : predictedLabelName,
     confidence_score: confidence,
     probabilities: [prob0, prob1],
     class_breakdown: breakdown,
