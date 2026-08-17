@@ -67,6 +67,7 @@ export interface PredictionResult {
   prediction: number
   predicted_label: string
   probabilities: number[]
+  class_breakdown?: { label: string; probability: number }[]
   confidence_score: number
   latency_ms: number
   model_version_id: number

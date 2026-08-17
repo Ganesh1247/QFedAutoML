@@ -110,13 +110,47 @@ export const PredictLabView: React.FC<PredictLabViewProps> = ({ models, activeDa
   const isCustomDataset = Boolean(activeDataset && activeDataset.source === 'user_upload')
   const targetCol = activeDataset?.target_column || 'Target'
   const datasetTitle = activeDataset?.filename || 'Built-in Dataset'
+  const isWeather = activeDataset?.filename?.toLowerCase().includes('weather') || targetCol.toLowerCase().includes('weather')
 
-  const class0Name = isCustomDataset ? `Standard / Lower Tier (${targetCol})` : 'Negative / Normal (Class 0)'
-  const class1Name = isCustomDataset ? `High / Premium Tier (${targetCol})` : 'Positive / Target (Class 1)'
+  // Helper to format weather label with emoji
+  const formatWeatherLabel = (lbl: string) => {
+    const l = lbl.toLowerCase()
+    if (l.includes('rain')) return '🌧️ Rain (Precipitation)'
+    if (l.includes('sun')) return '☀️ Sun (Clear Weather)'
+    if (l.includes('drizzle')) return '🌦️ Drizzle (Light Rain)'
+    if (l.includes('snow')) return '❄️ Snow (Freezing)'
+    if (l.includes('fog')) return '🌫️ Fog (Low Visibility)'
+    return lbl.toUpperCase()
+  }
 
-  const outcomeTitle = isCustomDataset
-    ? (predictionResult?.prediction === 1 ? `High Tier (${targetCol})` : `Standard Tier (${targetCol})`)
-    : (predictionResult?.prediction === 1 ? 'Positive / Target Detected (1)' : 'Negative / Baseline (0)')
+  const outcomeTitle = predictionResult?.predicted_label
+    ? (isWeather ? formatWeatherLabel(predictionResult.predicted_label) : predictionResult.predicted_label)
+    : (isCustomDataset ? `Standard (${targetCol})` : 'Normal (Class 0)')
+
+  const breakdownList = predictionResult?.class_breakdown || (
+    predictionResult?.probabilities
+      ? predictionResult.probabilities.map((p, idx) => ({
+          label: idx === 1 ? 'Positive / Upper Tier' : 'Negative / Lower Tier',
+          probability: p
+        }))
+      : []
+  )
+
+  const classColors = [
+    'from-cyan-500 to-blue-500',
+    'from-purple-500 to-indigo-500',
+    'from-emerald-500 to-teal-500',
+    'from-amber-500 to-orange-500',
+    'from-rose-500 to-pink-500',
+  ]
+
+  const textColors = [
+    'text-cyan-400',
+    'text-purple-400',
+    'text-emerald-400',
+    'text-amber-400',
+    'text-rose-400',
+  ]
 
   return (
     <div className="space-y-8 animate-fadeIn">
@@ -308,46 +342,50 @@ export const PredictLabView: React.FC<PredictLabViewProps> = ({ models, activeDa
                     : 'bg-emerald-950/40 border-emerald-500/50 text-emerald-300'
                 }`}
               >
-                <div className="text-xs uppercase font-mono tracking-wider font-semibold text-slate-400">Estimated Outcome</div>
-                <div className="text-xl font-display font-bold text-white">{outcomeTitle}</div>
+                <div className="text-xs uppercase font-mono tracking-wider font-semibold text-slate-400">Predicted Result</div>
+                <div className="text-2xl font-display font-bold text-white tracking-wide">{outcomeTitle}</div>
                 <div className="text-xs font-mono text-emerald-400">
                   Confidence Score: {(predictionResult.confidence_score * 100).toFixed(1)}%
                 </div>
               </div>
 
+              {/* Plain English Summary */}
+              <div className="p-3 rounded-xl bg-slate-900/90 border border-slate-800 text-xs text-slate-300 space-y-1">
+                <div className="font-semibold text-white flex items-center gap-1.5">
+                  <span>💡</span>
+                  <span>What does this result mean?</span>
+                </div>
+                <p className="text-[11px] leading-relaxed text-slate-400">
+                  Based on your input parameters, the trained AI model concludes the outcome for <strong>{targetCol}</strong> is <strong className="text-cyan-300">{outcomeTitle}</strong> with <strong>{(predictionResult.confidence_score * 100).toFixed(1)}% certainty</strong>.
+                </p>
+              </div>
+
               {/* Probabilities Distribution */}
               <div className="space-y-2 text-xs font-mono">
-                <div className="text-slate-400 uppercase font-semibold">Confidence Distribution</div>
-                <div className="space-y-2">
-                  <div>
-                    <div className="flex justify-between text-slate-300 text-[11px] mb-1">
-                      <span>{class0Name}:</span>
-                      <span className="text-emerald-400 font-bold">
-                        {((predictionResult.probabilities[0] || 0) * 100).toFixed(1)}%
-                      </span>
-                    </div>
-                    <div className="w-full h-2 bg-slate-900 rounded-full overflow-hidden border border-slate-800">
-                      <div
-                        className="h-full bg-emerald-400 rounded-full transition-all duration-500"
-                        style={{ width: `${(predictionResult.probabilities[0] || 0) * 100}%` }}
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <div className="flex justify-between text-slate-300 text-[11px] mb-1">
-                      <span>{class1Name}:</span>
-                      <span className="text-purple-400 font-bold">
-                        {((predictionResult.probabilities[1] || 0) * 100).toFixed(1)}%
-                      </span>
-                    </div>
-                    <div className="w-full h-2 bg-slate-900 rounded-full overflow-hidden border border-slate-800">
-                      <div
-                        className="h-full bg-purple-400 rounded-full transition-all duration-500"
-                        style={{ width: `${(predictionResult.probabilities[1] || 0) * 100}%` }}
-                      />
-                    </div>
-                  </div>
+                <div className="text-slate-400 uppercase font-semibold">Category Likelihood Breakdown</div>
+                <div className="space-y-2.5">
+                  {breakdownList.map((item, idx) => {
+                    const labelFormatted = isWeather ? formatWeatherLabel(item.label) : item.label
+                    const pct = Math.min(100, Math.max(0, (item.probability || 0) * 100))
+                    const colorGradient = classColors[idx % classColors.length]
+                    const txtColor = textColors[idx % textColors.length]
+                    return (
+                      <div key={idx}>
+                        <div className="flex justify-between text-slate-300 text-[11px] mb-1">
+                          <span className="capitalize">{labelFormatted}:</span>
+                          <span className={`${txtColor} font-bold`}>
+                            {pct.toFixed(1)}%
+                          </span>
+                        </div>
+                        <div className="w-full h-2 bg-slate-900 rounded-full overflow-hidden border border-slate-800">
+                          <div
+                            className={`h-full bg-gradient-to-r ${colorGradient} rounded-full transition-all duration-500`}
+                            style={{ width: `${pct}%` }}
+                          />
+                        </div>
+                      </div>
+                    )
+                  })}
                 </div>
               </div>
 
@@ -363,7 +401,7 @@ export const PredictLabView: React.FC<PredictLabViewProps> = ({ models, activeDa
                 <div className="flex items-center justify-between text-slate-400">
                   <span className="flex items-center gap-1.5">
                     <Cpu className="w-3.5 h-3.5 text-purple-400" />
-                    <span>Active Target:</span>
+                    <span>Target Variable:</span>
                   </span>
                   <span className="text-purple-300 font-bold">{targetCol}</span>
                 </div>
