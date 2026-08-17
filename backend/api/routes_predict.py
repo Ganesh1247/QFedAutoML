@@ -160,8 +160,20 @@ def run_prediction(
             confidence = 1.0
 
     latency_ms = float((time.perf_counter() - t_start) * 1000.0)
-    label_map = {0: "Benign / Normal", 1: "Malignant / Anomaly"}
-    predicted_label = label_map.get(pred_val, f"Class {pred_val}")
+    
+    # Resolve real class label
+    from backend.api.routes_datasets import _read_active
+    active_ds = _read_active()
+    if active_ds and active_ds.get("class_labels"):
+        labels = active_ds["class_labels"]
+        if 0 <= pred_val < len(labels):
+            predicted_label = labels[pred_val]
+        else:
+            predicted_label = f"Class {pred_val}"
+    else:
+        label_map = {0: "Baseline / Class 0", 1: "Target / Class 1"}
+        predicted_label = label_map.get(pred_val, f"Class {pred_val}")
+
     arch_name = "TimeSeriesTransformer" if req.sequence is not None else target_model_ver.architecture_type
 
     # 3. Log Prediction to Database for telemetry and auditing

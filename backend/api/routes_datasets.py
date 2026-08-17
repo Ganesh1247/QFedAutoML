@@ -77,8 +77,10 @@ def _validate_and_profile(df: pd.DataFrame, target_col: str) -> dict[str, Any]:
 
     # Validate target column — convert string labels to int if needed
     y = df[target_col]
+    class_labels = None
     if not pd.api.types.is_numeric_dtype(y):
-        classes = sorted(y.unique())
+        classes = sorted(y.dropna().unique())
+        class_labels = [str(lbl) for lbl in classes]
         label_map = {lbl: idx for idx, lbl in enumerate(classes)}
         df[target_col] = y.map(label_map)
 
@@ -100,6 +102,7 @@ def _validate_and_profile(df: pd.DataFrame, target_col: str) -> dict[str, Any]:
         "num_samples": len(df),
         "num_classes": num_classes,
         "classes": unique_classes,
+        "class_labels": class_labels,
         "class_distribution": {int(k): int(v) for k, v in class_counts.items()},
         "dropped_non_numeric": non_numeric,
     }
@@ -165,6 +168,7 @@ async def upload_dataset(
         "num_features": profile["num_features"],
         "num_classes": profile["num_classes"],
         "classes": profile["classes"],
+        "class_labels": profile["class_labels"],
         "class_distribution": profile["class_distribution"],
         "dropped_non_numeric": profile["dropped_non_numeric"],
     }

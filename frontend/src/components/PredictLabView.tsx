@@ -143,8 +143,20 @@ export const PredictLabView: React.FC<PredictLabViewProps> = ({ models, activeDa
   const datasetTitle = activeDataset?.filename || 'Built-in Dataset'
 
   // Helper to format weather label with emoji
-  const formatWeatherLabel = (lbl: string) => {
-    const l = lbl.toLowerCase()
+  const formatWeatherLabel = (lbl: string, predIndex?: number) => {
+    let l = (lbl || '').toLowerCase()
+    if (l.includes('class') || !isNaN(Number(l))) {
+      const idx = predIndex !== undefined ? predIndex : parseInt(l.replace(/\D/g, '') || '2')
+      const weatherMap: Record<number, string> = {
+        0: 'drizzle',
+        1: 'fog',
+        2: 'rain',
+        3: 'snow',
+        4: 'sun'
+      }
+      l = weatherMap[idx % 5] || 'rain'
+    }
+
     if (l.includes('rain')) return '🌧️ Rain (Precipitation)'
     if (l.includes('sun')) return '☀️ Sun (Clear Weather)'
     if (l.includes('drizzle')) return '🌦️ Drizzle (Light Rain)'
@@ -153,9 +165,16 @@ export const PredictLabView: React.FC<PredictLabViewProps> = ({ models, activeDa
     return lbl.toUpperCase()
   }
 
-  const outcomeTitle = predictionResult?.predicted_label
-    ? (isWeather ? formatWeatherLabel(predictionResult.predicted_label) : predictionResult.predicted_label)
-    : (isCustomDataset ? `Standard (${targetCol})` : 'Normal (Class 0)')
+  const resolveLabel = (lbl?: string, predIndex?: number): string => {
+    if (!lbl) return isCustomDataset ? `Standard (${targetCol})` : 'Normal (Class 0)'
+    if (isWeather) return formatWeatherLabel(lbl, predIndex)
+    if (activeDataset?.class_labels && activeDataset.class_labels.length > 0 && predIndex !== undefined) {
+      return activeDataset.class_labels[predIndex % activeDataset.class_labels.length]
+    }
+    return lbl
+  }
+
+  const outcomeTitle = resolveLabel(predictionResult?.predicted_label, predictionResult?.prediction)
 
   const breakdownList = predictionResult?.class_breakdown || (
     predictionResult?.probabilities
