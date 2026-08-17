@@ -49,6 +49,16 @@ export const PredictLabView: React.FC<PredictLabViewProps> = ({ models, activeDa
     }
   }, [activeDataset])
 
+  // Auto-run prediction when features change (debounced)
+  useEffect(() => {
+    if (features.length > 0) {
+      const timer = setTimeout(() => {
+        handleRunInference()
+      }, 250)
+      return () => clearTimeout(timer)
+    }
+  }, [features, selectedModelId])
+
   const featureLabels = activeDataset?.feature_columns && activeDataset.feature_columns.length > 0
     ? activeDataset.feature_columns
     : defaultBreastCancerLabels
@@ -80,7 +90,28 @@ export const PredictLabView: React.FC<PredictLabViewProps> = ({ models, activeDa
     }
   }
 
+  const isWeather = activeDataset?.filename?.toLowerCase().includes('weather') || activeDataset?.target_column?.toLowerCase().includes('weather')
+
+  const loadWeatherScenario = (scenario: 'rain' | 'sun' | 'drizzle' | 'snow' | 'fog') => {
+    if (scenario === 'rain') {
+      setFeatures([12.5, 7.2, 4.1, 14.8])
+    } else if (scenario === 'sun') {
+      setFeatures([0.0, 26.5, 14.2, 4.2])
+    } else if (scenario === 'drizzle') {
+      setFeatures([0.4, 12.0, 8.5, 3.1])
+    } else if (scenario === 'snow') {
+      setFeatures([5.2, 0.5, -4.2, 11.0])
+    } else if (scenario === 'fog') {
+      setFeatures([0.0, 8.5, 5.0, 1.2])
+    }
+  }
+
   const loadPreset = (type: 'sampleA' | 'sampleB') => {
+    if (isWeather) {
+      loadWeatherScenario(type === 'sampleA' ? 'rain' : 'sun')
+      return
+    }
+
     if (activeDataset?.feature_columns && activeDataset.feature_columns.length > 0) {
       if (type === 'sampleA') {
         setFeatures(activeDataset.feature_columns.map((_, i) => +(25.0 + (i * 4.2)).toFixed(2)))
@@ -110,7 +141,6 @@ export const PredictLabView: React.FC<PredictLabViewProps> = ({ models, activeDa
   const isCustomDataset = Boolean(activeDataset && activeDataset.source === 'user_upload')
   const targetCol = activeDataset?.target_column || 'Target'
   const datasetTitle = activeDataset?.filename || 'Built-in Dataset'
-  const isWeather = activeDataset?.filename?.toLowerCase().includes('weather') || targetCol.toLowerCase().includes('weather')
 
   // Helper to format weather label with emoji
   const formatWeatherLabel = (lbl: string) => {
@@ -250,20 +280,57 @@ export const PredictLabView: React.FC<PredictLabViewProps> = ({ models, activeDa
 
         {/* Example Presets */}
         {inputType === 'tabular' && (
-          <div className="flex items-center gap-2 text-xs font-mono">
-            <span className="text-slate-500">Example Inputs:</span>
-            <button
-              onClick={() => loadPreset('sampleA')}
-              className="px-2.5 py-1 rounded bg-slate-900 border border-slate-700 text-cyan-300 hover:border-cyan-500 transition-colors cursor-pointer"
-            >
-              High Values Sample
-            </button>
-            <button
-              onClick={() => loadPreset('sampleB')}
-              className="px-2.5 py-1 rounded bg-slate-900 border border-slate-700 text-slate-300 hover:border-slate-500 transition-colors cursor-pointer"
-            >
-              Average Sample
-            </button>
+          <div className="flex flex-wrap items-center gap-2 text-xs font-mono">
+            <span className="text-slate-500">Quick Test Scenarios:</span>
+            {isWeather ? (
+              <>
+                <button
+                  onClick={() => loadWeatherScenario('rain')}
+                  className="px-2.5 py-1 rounded bg-blue-950/60 border border-blue-700 text-blue-300 hover:border-blue-400 transition-colors cursor-pointer"
+                >
+                  🌧️ Rain Scenario
+                </button>
+                <button
+                  onClick={() => loadWeatherScenario('sun')}
+                  className="px-2.5 py-1 rounded bg-amber-950/60 border border-amber-700 text-amber-300 hover:border-amber-400 transition-colors cursor-pointer"
+                >
+                  ☀️ Sunny Scenario
+                </button>
+                <button
+                  onClick={() => loadWeatherScenario('drizzle')}
+                  className="px-2.5 py-1 rounded bg-cyan-950/60 border border-cyan-700 text-cyan-300 hover:border-cyan-400 transition-colors cursor-pointer"
+                >
+                  🌦️ Drizzle Scenario
+                </button>
+                <button
+                  onClick={() => loadWeatherScenario('snow')}
+                  className="px-2.5 py-1 rounded bg-indigo-950/60 border border-indigo-700 text-indigo-300 hover:border-indigo-400 transition-colors cursor-pointer"
+                >
+                  ❄️ Snow Scenario
+                </button>
+                <button
+                  onClick={() => loadWeatherScenario('fog')}
+                  className="px-2.5 py-1 rounded bg-slate-900 border border-slate-700 text-slate-300 hover:border-slate-400 transition-colors cursor-pointer"
+                >
+                  🌫️ Fog Scenario
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  onClick={() => loadPreset('sampleA')}
+                  className="px-2.5 py-1 rounded bg-slate-900 border border-slate-700 text-cyan-300 hover:border-cyan-500 transition-colors cursor-pointer"
+                >
+                  High Values Sample
+                </button>
+                <button
+                  onClick={() => loadPreset('sampleB')}
+                  className="px-2.5 py-1 rounded bg-slate-900 border border-slate-700 text-slate-300 hover:border-slate-500 transition-colors cursor-pointer"
+                >
+                  Average Sample
+                </button>
+              </>
+            )}
           </div>
         )}
       </div>
